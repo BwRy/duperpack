@@ -69,3 +69,4 @@ jobs:
           name: 'WhatsApp-Arm64-libraries'
           path: libs.spk.zst.arm64.zip
           retention-days: 1
+

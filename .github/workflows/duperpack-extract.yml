@@ -8,7 +8,7 @@ jobs:
         api-level: [29]
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: actions/setup-python@master
         with:
@@ -28,7 +28,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         
       - name: AVD cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: avd-cache
         with:
           path: |
@@ -57,14 +57,14 @@ jobs:
 
       # Updated Artifacts to ensure your x86_64 libs are captured
       - name: 'Upload x86_64 Artifact'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: 'WhatsApp-x86_64-libraries'
           path: libs.spk.zst.x86_64.zip
           retention-days: 1
 
       - name: 'Upload Arm64 Artifact'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: 'WhatsApp-Arm64-libraries'
           path: libs.spk.zst.arm64.zip

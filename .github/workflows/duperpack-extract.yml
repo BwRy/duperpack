@@ -2,7 +2,7 @@ name: Superpack Native Library Extraction
 on: [push]
 jobs:
   initialize-environment:
-    runs-on: macos-13
+    runs-on: macos-15
     strategy:
       matrix:
         api-level: [29]
@@ -12,7 +12,7 @@ jobs:
 
       - uses: actions/setup-python@master
         with:
-          python-version: '3.7'
+          python-version: '3.11'
 
       # NEW STEP: Download the large APK from your Release
       - name: Download WhatsApp from Release

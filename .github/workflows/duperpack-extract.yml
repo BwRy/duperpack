@@ -2,7 +2,7 @@ name: Superpack Native Library Extraction
 on: [push]
 jobs:
   initialize-environment:
-    runs-on: macos-11
+    runs-on: macos-15
     strategy:
       matrix:
         api-level: [29]

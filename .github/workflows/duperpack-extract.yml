@@ -1,20 +1,32 @@
 name: Superpack Native Library Extraction
 on: [push]
+
 jobs:
-  initialize-environment:
-    runs-on: macos-15
+  extract:
+    # Use a matrix to run both architectures in parallel
     strategy:
       matrix:
-        api-level: [29]
+        include:
+          - arch: x86_64
+            # Intel-based runner for x86_64 acceleration
+            runner: macos-15-intel 
+            api-level: 29
+          - arch: arm64-v8a
+            # Apple Silicon runner for arm64 acceleration
+            runner: macos-15 
+            api-level: 30 # arm64 emulators are more stable on API 30+
+
+    runs-on: ${{ matrix.runner }}
+    
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: actions/setup-python@master
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # NEW STEP: Download the large APK from your Release
       - name: Download WhatsApp from Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -24,9 +36,6 @@ jobs:
       - name: Install apktool
         run: brew install apktool
 
-      - name: Gradle cache
-        uses: gradle/gradle-build-action@v2
-        
       - name: AVD cache
         uses: actions/cache@v4
         id: avd-cache
@@ -34,39 +43,25 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
+          key: avd-${{ matrix.arch }}-${{ matrix.api-level }}
 
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
+      - name: Run Extraction
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.arch }}
+          # Force x86_64 or arm64 specifically
+          target: google_apis
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: echo "Generated AVD snapshot for caching."
-
-      - name: Install and extract binaries
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          # duper-extract.sh usually expects to find WhatsApp.apk in the root
           script: bash ./duper-extract.sh
 
-      # Updated Artifacts to ensure your x86_64 libs are captured
-      - name: 'Upload x86_64 Artifact'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 'WhatsApp-x86_64-libraries'
-          path: libs.spk.zst.x86_64.zip
+          # Dynamic name based on the matrix architecture
+          name: WhatsApp-${{ matrix.arch }}-libraries
+          path: libs.spk.zst.${{ matrix.arch == 'arm64-v8a' && 'arm64' || 'x86_64' }}.zip
           retention-days: 1
-
-      - name: 'Upload Arm64 Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-          name: 'WhatsApp-Arm64-libraries'
-          path: libs.spk.zst.arm64.zip
-          retention-days: 1
-
